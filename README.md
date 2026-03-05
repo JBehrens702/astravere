@@ -1,2 +1,3 @@
-# astravere
-Content for my D&amp;D setting, "Astravere." Among other things.
+# CELESTEV2
+This is a celestial calendar for the Astravere campaign setting, available through Streamlit at:
+https://celestev2.streamlit.app/

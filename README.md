@@ -55,6 +55,8 @@ COPYRIGHT NOTICE Open Game License v 1.0a Copyright 2000, Wizards of the Coast, 
 
 System Reference Document Copyright 2000-2003, Wizards of the Coast, Inc.; Authors Jonathan Tweet, Monte Cook, Skip Williams, Rich Baker, Andy Collins, David Noonan, Rich Redman, Bruce R. Cordell, John D. Rateliff, Thomas Reid, James Wyatt, based on original material by E. Gary Gygax and Dave Arneson.
 
+System Reference Document 5.1 Copyright 2016, Wizards of the Coast, Inc.; Authors Mike Mearls, Jeremy	Crawford,	Chris	Perkins, Rodney	Thompson,	Peter	Lee,	James	Wyatt,	Robert	J.	Schwalb,	Bruce	R.	Cordell,	Chris	Sims,	and	Steve Townshend,	based on	original material	by E. Gary	Gygax	and	Dave	Arneson.
+
 CELESTEV2 Copyright 2026, Jonathan Behrens
 
 StatApp Copyright 2026, Author/Creator Jonathan Behrens

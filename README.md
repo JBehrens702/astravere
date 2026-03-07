@@ -17,10 +17,10 @@ StatApp is a free statblock writer and combat session manager, designed to light
 If you have an idea for a project that would be helpful to you, reach out! I am always looking to improve players' and DMs' experience! Once I have progressed in putting together the campaign setting itself, I will also include the game files here!
 
 
-### LEGALESE:
+## LEGALESE:
 All content made by me, insofar as it relates to Wizards of the Coast or the Dungeons and Dragons game, is subject to the V1.0a OGL:
 
-#### OPEN GAME LICENSE Version 1.0a
+### OPEN GAME LICENSE Version 1.0a
 
 The following text is the property of Wizards of the Coast, Inc. and is Copyright 2000 Wizards of the Coast, Inc ("Wizards"). All Rights Reserved.
 

@@ -68,7 +68,7 @@ with col1:
     if st.button("Check Date"):
         try:
             day, month, year = map(int, date_input.split('/'))
-            st.session_state.dayAci = ((day - 1) + month * 30 + year * 360)
+            st.session_state.dayAci = ((day - 1) + ((month * 30) - 1) + ((year * 360) - 1))
         except:
             st.error("Invalid date format. Use DD/MM/YYYY")
 

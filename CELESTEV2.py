@@ -3,9 +3,12 @@ import streamlit as st
 # FellianSynchophite to Celestial events
 
 def get_solstices(dayAci):
-    year = dayAci // 360
-    month = (dayAci % 360) // 30
-    day = (dayAci % 360) % 30 + 1
+
+    # back calculate the number of days since 01/01/0001
+
+    year = (dayAci // 360) + 1
+    month = ((dayAci % 360) // 30) + 1
+    day = ((dayAci % 360) % 30) + 1
 
     output = []
     output.append(f"RESULTS FOR: {day}/{month}/{year}")
@@ -68,7 +71,7 @@ with col1:
     if st.button("Check Date"):
         try:
             day, month, year = map(int, date_input.split('/'))
-            st.session_state.dayAci = ((day - 1) + ((month * 30) - 1) + ((year * 360) - 1))
+            st.session_state.dayAci = ((day - 1) + ((month - 1) * 30) + ((year - 1) * 360))
         except:
             st.error("Invalid date format. Use DD/MM/YYYY")
 

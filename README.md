@@ -8,7 +8,7 @@ This is a celestial calendar for the Astravere campaign setting, available throu
 https://celestev2.streamlit.app/
 
 
-## StatApp (V1.4)
+## StatApp (V2.0)
 #### General: Statistics
 StatApp is a free statblock writer and combat session manager, designed to lighten your load as a DM! Statblocks made with StatApp feature ONLY attack-related info, and are saved as a specifically formatted .txt file (so you can share them!!), used by the combat manager to handle most of the die rolling for you, making large-scale combat NOT take hours, and so your time can be spent helping your players FEEL what is going on, not just running maths.
 

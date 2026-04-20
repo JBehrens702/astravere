@@ -45,13 +45,16 @@ def build_bracket(quotes: list[dict]) -> list[list[dict | None]]:
     Build first-round matchups. Try to keep same-author quotes in the same
     half of the bracket so they can only meet in later rounds.
     Returns list of pairs: [[q1, q2], [q3, q4], ...]
+    At most one BYE is added if there's an odd number of quotes.
     """
-    size = next_power_of_two(len(quotes))
-    # Pad with byes
+    # Only add one BYE if odd number of quotes
+    num_quotes = len(quotes)
     padded = quotes[:]
     random.shuffle(padded)
-    while len(padded) < size:
-        padded.append(None)
+    if num_quotes % 2 == 1:
+        padded.append(None)  # Only one BYE
+    
+    size = len(padded)
 
     # Group by author, spread authors across bracket halves
     by_author: dict[str, list] = {}

@@ -35,6 +35,19 @@ def _strip_outer_quotes(s: str) -> str:
     return s
 
 
+def _clean_text(s: str) -> str:
+    """Remove a lone leading quote character left after parsing.
+    Only acts when the string itself starts with a quote mark, which means
+    the outer-quote stripping was incomplete (e.g. "text with no closing quote).
+    Strings that start with ( are context-prefixed and left untouched.
+    """
+    if s and s[0] in '"\u201c':
+        s = s[1:]
+        if s and s[-1] in '"\u201d':
+            s = s[:-1]
+    return s
+
+
 def parse_quotebook(text: str) -> list[dict]:
     # Tabs become line separators (handles tab-delimited exports)
     text = text.replace("\t", "\n")
@@ -79,16 +92,16 @@ def parse_quotebook(text: str) -> list[dict]:
             if m:
                 # Single "Author: "Quote"" line → extract author
                 author = m.group(1).strip() or None
-                quote_text = m.group(2).strip()
+                quote_text = _clean_text(m.group(2).strip())
             elif " - " in line:
                 # "Quote" - Author  OR  (Context) "Quote" - Author
                 # Use smart strip so (Context) "Quote" keeps its shape intact
                 parts = line.rsplit(" - ", 1)
-                quote_text = _strip_outer_quotes(parts[0].strip())
+                quote_text = _clean_text(_strip_outer_quotes(parts[0].strip()))
                 author = parts[1].strip() or None
             else:
                 # Plain line with no recognisable author — display as-is
-                quote_text = _strip_outer_quotes(line)
+                quote_text = _clean_text(_strip_outer_quotes(line))
                 author = None
 
         if quote_text:

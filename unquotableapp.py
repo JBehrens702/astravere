@@ -171,12 +171,29 @@ for k, v in [("mode", None), ("room_code", None), ("player_name", None)]:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+def display_text(text: str, max_len: int = 70) -> str:
+    """Flatten newlines to ' / ' and truncate for use in inline contexts."""
+    flat = text.replace("\n", " / ")
+    return flat[:max_len] + ("…" if len(flat) > max_len else "")
+
+
 def render_quote_card(quote, selected=False, show_author=False):
     css = "selected" if selected else ""
-    author_html = f'<div class="quote-author">— {quote["author"]}</div>' if show_author else ""
+    author_html = (
+        f'<div class="quote-author">— {quote["author"]}</div>'
+        if show_author and quote.get("author")
+        else ""
+    )
+    raw_text = quote["text"]
+    if "\n" in raw_text:
+        # Multi-line dialogue: preserve line breaks, no outer curly quotes
+        inner = raw_text.replace("\n", "<br>")
+        quote_html = f'<div class="quote-text">{inner}</div>'
+    else:
+        quote_html = f'<div class="quote-text">&#x201C;{raw_text}&#x201D;</div>'
     st.markdown(f"""
     <div class="quote-card {css}">
-        <div class="quote-text">&#x201C;{quote["text"]}&#x201D;</div>
+        {quote_html}
         {author_html}
     </div>
     """, unsafe_allow_html=True)
@@ -292,7 +309,7 @@ def render_bracket_visualization(state: dict, total_participants: int):
             
             node_text.append(f"{status_indicator}")
             hover_text = (
-                f"<b>{winner_quote['author']}</b><br>"
+                f"<b>{winner_quote.get('author') or 'Unknown'}</b><br>"
                 f"<i>\"{winner_quote['text'][:80]}{'…' if len(winner_quote['text']) > 80 else ''}<i><br>"
                 f"Votes: <b>{winner_votes}</b> vs {loser_votes}"
             )
@@ -428,7 +445,8 @@ def page_host_setup():
 
         with st.expander("Preview"):
             for q in quotes[:10]:
-                st.markdown(f'- *"{q["text"]}"* — {q["author"]}')
+                author_str = f" — {q['author']}" if q.get("author") else ""
+                st.markdown(f'- *"{display_text(q["text"], 80)}"*{author_str}')
             if len(quotes) > 10:
                 st.markdown(f"*…and {len(quotes)-10} more*")
 
@@ -561,13 +579,14 @@ def page_host():
                 winner, loser = m[ws], m["b" if ws == "a" else "a"]
                 va, vb = get_vote_counts(m)
                 wv, lv = (va, vb) if ws == "a" else (vb, va)
+                author_str = f" — {winner['author']}" if winner.get('author') else ""
                 st.markdown(f"""
                 <div style="display:flex;gap:1rem;align-items:center;margin-bottom:0.6rem;">
-                    <div style="flex:1;opacity:0.35;font-style:italic;font-size:0.88rem;">"{loser['text'][:70]}"</div>
+                    <div style="flex:1;opacity:0.35;font-style:italic;font-size:0.88rem;">"{display_text(loser['text'])}"</div>
                     <div style="color:#4f8ef7;font-size:0.9rem;">→</div>
                     <div style="flex:1;font-style:italic;font-size:0.88rem;">
-                        "{winner['text'][:70]}"
-                        <span style="font-size:0.75rem;color:#888;"> — {winner['author']} · {wv}-{lv}</span>
+                        "{display_text(winner['text'])}"
+                        <span style="font-size:0.75rem;color:#888;">{author_str} · {wv}-{lv}</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -581,11 +600,12 @@ def page_host():
     # Done
     elif status == "done":
         champ = state.get("champion", {})
+        champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
         st.markdown(f"""
         <div class="champion-card">
             <div class="champion-label">🏆 Champion</div>
             <div class="champion-quote">&#x201C;{champ.get('text','')}&#x201D;</div>
-            <div class="champion-author">— {champ.get('author','')}</div>
+            {champ_author_html}
         </div>
         """, unsafe_allow_html=True)
 
@@ -600,7 +620,8 @@ def page_host():
                     va, vb = get_vote_counts(m)
                     wv = max(va, vb)
                     lv = min(va, vb)
-                    st.markdown(f'- ✓ *"{w["text"][:70]}"* — {w["author"]} ({wv}-{lv})')
+                    author_str = f" — {w['author']}" if w.get('author') else ""
+                    st.markdown(f'- ✓ *"{display_text(w["text"])}"*{author_str} ({wv}-{lv})')
 
         if st.button("🔄  New Game"):
             st.session_state.mode = None
@@ -683,11 +704,12 @@ def page_participant():
 
     elif status == "done":
         champ = state.get("champion", {})
+        champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
         st.markdown(f"""
         <div class="champion-card">
             <div class="champion-label">🏆 Champion</div>
             <div class="champion-quote">&#x201C;{champ.get('text','')}&#x201D;</div>
-            <div class="champion-author">— {champ.get('author','')}</div>
+            {champ_author_html}
         </div>
         """, unsafe_allow_html=True)
         st.balloons()

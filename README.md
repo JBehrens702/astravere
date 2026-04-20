@@ -12,7 +12,7 @@ https://celestev2.streamlit.app/
 #### General D&D: Statistics
 StatApp is a free statblock writer and combat session manager, designed to lighten your load as a DM! Statblocks made with StatApp feature ONLY attack-related info, and are saved as a specifically formatted .txt file (so you can share them!!), used by the combat manager to handle most of the die rolling for you, making large-scale combat NOT take hours, and so your time can be spent helping your players FEEL what is going on, not just running maths.
 
-## [UN]Quotable (V1.0)
+## [UN]Quotable (V1.1)
 #### Miscellaneous: Games
 [UN]Quotable is my take on a Jackbox-style bracket game, designed specifically for your quotebooks. Simply upload a .txt file with one quote per line. For maximum functionality, use the format "Quote" - Author, which will hide authors during voting, but display the winning author as Champion! Also, quotes known to belong to the same author will be grouped in brackets, so only the author's best quotes will proceed. Play with as many of your friends as you want on any browser at https://unquotable.streamlit.app/!
 

@@ -309,7 +309,7 @@ def render_bracket_visualization(state: dict, total_participants: int):
             
             node_text.append(f"{status_indicator}")
             hover_text = (
-                f"<b>{winner_quote.get('author') or 'Unknown'}</b><br>"
+                f"<b>{winner_quote.get('author') or ''}</b><br>"
                 f"<i>\"{winner_quote['text'][:80]}{'…' if len(winner_quote['text']) > 80 else ''}<i><br>"
                 f"Votes: <b>{winner_votes}</b> vs {loser_votes}"
             )

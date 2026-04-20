@@ -644,7 +644,7 @@ def page_participant():
     # Heartbeat
     join_game(code, name)
 
-    st.markdown("## ❝ Quote Bracket")
+    st.markdown("## [UN]Quotable - The Game")
     st.markdown(f"<p style='color:#555;'>Room <strong style='color:#888'>{code}</strong> · Playing as <strong style='color:#888'>{name}</strong></p>", unsafe_allow_html=True)
     st.markdown("---")
 

@@ -432,7 +432,7 @@ def page_host_setup():
     st.markdown("## Host Setup")
     st.markdown("---")
     host_name = st.text_input("Your name", placeholder="Host")
-    uploaded = st.file_uploader("Upload quotebook (.txt)", type=["txt"])
+    uploaded = st.file_uploader("Upload quotebook (.txt) - Ensure one quote per line.", type=["txt"])
 
     if uploaded and host_name:
         text = uploaded.read().decode("utf-8", errors="replace")

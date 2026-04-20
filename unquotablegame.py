@@ -256,10 +256,24 @@ def advance_round(room_code: str):
         state["matchups"] = []
     else:
         state["round"] += 1
-        state["matchups"] = [
-            {"a": winners[i], "b": winners[i + 1], "votes": {"a": [], "b": []}, "winner": None}
-            for i in range(0, len(winners), 2)
-        ]
+        state["matchups"] = []
+        for i in range(0, len(winners), 2):
+            if i + 1 < len(winners):
+                # Normal pairing
+                state["matchups"].append({
+                    "a": winners[i], 
+                    "b": winners[i + 1], 
+                    "votes": {"a": [], "b": []}, 
+                    "winner": None
+                })
+            else:
+                # Odd winner gets a BYE to next round
+                state["matchups"].append({
+                    "a": winners[i], 
+                    "b": None, 
+                    "votes": {"a": [], "b": []}, 
+                    "winner": None
+                })
         state["status"] = "results"
 
     save_state(room_code, state)

@@ -14,7 +14,7 @@ from unquotablegame import (
 )
 
 st.set_page_config(
-    page_title="Quote Bracket",
+    page_title="[UN]Quotable - The Game",
     page_icon="❝",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -518,7 +518,8 @@ def page_host():
         for i, m in enumerate(state["matchups"]):
             if m["a"] is None or m["b"] is None:
                 bye_q = m["b"] if m["a"] is None else m["a"]
-                st.markdown(f"*Match {i+1}: BYE — \"{bye_q['text'][:60]}\" advances*")
+                quote_text = bye_q.get('text', 'Unknown Quote') if isinstance(bye_q, dict) else str(bye_q)
+                st.markdown(f"*Match {i+1}: BYE — \"{quote_text[:60]}\" advances*")
                 continue
             va, vb = get_vote_counts(m)
             col_a, col_vs, col_b = st.columns([5, 1, 5])

@@ -2,10 +2,10 @@ import json
 import os
 import random
 import math
-import re
 import string
 import time
 from pathlib import Path
+from filelock import FileLock
 
 STATE_DIR = Path("game_states")
 STATE_DIR.mkdir(exist_ok=True)
@@ -15,98 +15,30 @@ def state_path(room_code: str) -> Path:
     return STATE_DIR / f"{room_code}.json"
 
 
+def lock_path(room_code: str) -> Path:
+    """Get the lock file path for a room code."""
+    return STATE_DIR / f"{room_code}.lock"
+
+
 def generate_room_code() -> str:
     return "".join(random.choices(string.ascii_uppercase, k=5))
 
 
-# Matches lines of the form:   Author: "Quote text"
-# Excludes lines starting with ( or " so context-prefixed and already-quoted
-# lines don't get misidentified as colon-author format.
-_COLON_RE = re.compile(r'^([^"(\n][^:\n]*):\s*"(.+)"$')
-
-
-def _strip_outer_quotes(s: str) -> str:
-    """Strip surrounding quotes only when the string is fully wrapped in them."""
-    if len(s) >= 2 and (
-        (s[0] == '"' and s[-1] == '"') or
-        (s[0] == '\u201c' and s[-1] == '\u201d')
-    ):
-        return s[1:-1]
-    return s
-
-
-def _clean_text(s: str) -> str:
-    """Remove a lone leading quote character left after parsing.
-    Only acts when the string itself starts with a quote mark, which means
-    the outer-quote stripping was incomplete (e.g. "text with no closing quote).
-    Strings that start with ( are context-prefixed and left untouched.
-    """
-    if s and s[0] in '"\u201c':
-        s = s[1:]
-        if s and s[-1] in '"\u201d':
-            s = s[:-1]
-    return s
-
-
 def parse_quotebook(text: str) -> list[dict]:
-    # Tabs become line separators (handles tab-delimited exports)
-    text = text.replace("\t", "\n")
-
-    # Split into paragraphs (groups of lines separated by blank lines).
-    # Blank-line boundaries matter: an isolated "Name: Quote" line is a single
-    # entry, while consecutive such lines with no blank between them form
-    # multi-speaker dialogue.
-    paragraphs: list[list[str]] = []
-    current: list[str] = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if line:
-            current.append(line)
-        else:
-            if current:
-                paragraphs.append(current)
-                current = []
-    if current:
-        paragraphs.append(current)
-
-    # A paragraph where every line matches the colon-author pattern AND
-    # it has more than one line → multi-speaker dialogue (one entry, no author).
-    # Everything else → each line is its own independent entry.
-    entries: list[list[str]] = []
-    for para in paragraphs:
-        if len(para) > 1 and all(_COLON_RE.match(l) for l in para):
-            entries.append(para)           # dialogue block
-        else:
-            for line in para:
-                entries.append([line])     # individual entry
-
     quotes = []
-    for group in entries:
-        if len(group) > 1:
-            # Multi-speaker dialogue — join with newline, no author
-            quote_text = "\n".join(group)
-            author = None
+    for line in text.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if " - " in line:
+            parts = line.rsplit(" - ", 1)
+            quote_text = parts[0].strip().strip('"').strip("\u201c\u201d")
+            author = parts[1].strip()
         else:
-            line = group[0]
-            m = _COLON_RE.match(line)
-            if m:
-                # Single "Author: "Quote"" line → extract author
-                author = m.group(1).strip() or None
-                quote_text = _clean_text(m.group(2).strip())
-            elif " - " in line:
-                # "Quote" - Author  OR  (Context) "Quote" - Author
-                # Use smart strip so (Context) "Quote" keeps its shape intact
-                parts = line.rsplit(" - ", 1)
-                quote_text = _clean_text(_strip_outer_quotes(parts[0].strip()))
-                author = parts[1].strip() or None
-            else:
-                # Plain line with no recognisable author — display as-is
-                quote_text = _clean_text(_strip_outer_quotes(line))
-                author = None
-
+            quote_text = line.strip('"').strip("\u201c\u201d")
+            author = "Unknown"
         if quote_text:
             quotes.append({"text": quote_text, "author": author})
-
     return quotes
 
 
@@ -116,47 +48,54 @@ def next_power_of_two(n: int) -> int:
 
 def build_bracket(quotes: list[dict]) -> list[list[dict | None]]:
     """
-    Build first-round matchups.
-    Strategy:
-      1. Group quotes by author and shuffle within each group.
-      2. Pair same-author quotes together (so they can only meet later).
-      3. Collect the one leftover per author that has an odd count.
-      4. Shuffle those leftover singles and pair them with each other.
-      5. If there's still one unpaired single, give it the sole BYE.
-    Result: at most ONE BYE, same-author quotes never meet in round 1.
+    Build first-round matchups. Try to keep same-author quotes in the same
+    half of the bracket so they can only meet in later rounds.
+    Returns list of pairs: [[q1, q2], [q3, q4], ...]
+    At most one BYE is added if there's an odd number of quotes.
     """
-    # Group and shuffle within each author.
-    # Quotes with no author each get a unique key so they're never grouped together.
+    # Only add one BYE if odd number of quotes
+    num_quotes = len(quotes)
+    padded = quotes[:]
+    random.shuffle(padded)
+    if num_quotes % 2 == 1:
+        padded.append(None)  # Only one BYE
+    
+    size = len(padded)
+
+    # Group by author, spread authors across bracket halves
     by_author: dict[str, list] = {}
-    for i, q in enumerate(quotes):
-        key = q["author"] if q["author"] else f"__anon_{i}__"
-        by_author.setdefault(key, []).append(q)
-    for lst in by_author.values():
-        random.shuffle(lst)
+    for q in padded:
+        if q is None:
+            continue
+        by_author.setdefault(q["author"], []).append(q)
 
-    same_author_pairs: list[list] = []
-    singles: list[dict] = []
+    # Sort authors by count descending so big authors get spread first
+    ordered = []
+    authors_sorted = sorted(by_author.keys(), key=lambda a: -len(by_author[a]))
+    for author in authors_sorted:
+        ordered.extend(by_author[author])
 
-    for author_qs in by_author.values():
-        for i in range(0, len(author_qs) - 1, 2):
-            same_author_pairs.append([author_qs[i], author_qs[i + 1]])
-        if len(author_qs) % 2 == 1:
-            singles.append(author_qs[-1])
+    # Fill slots using a "snake" pattern to spread same-author quotes
+    slots = [None] * size
+    indices = list(range(size))
+    # Interleave: 0, size-1, size//2, size//2-1, ...
+    spread = []
+    lo, hi = 0, size - 1
+    toggle = True
+    while lo <= hi:
+        if toggle:
+            spread.append(lo)
+            lo += 1
+        else:
+            spread.append(hi)
+            hi -= 1
+        toggle = not toggle
 
-    # Pair up the leftover singles with each other (cross-author)
-    random.shuffle(singles)
-    cross_pairs: list[list] = []
-    for i in range(0, len(singles) - 1, 2):
-        cross_pairs.append([singles[i], singles[i + 1]])
+    for i, q in enumerate(ordered):
+        slots[spread[i]] = q
 
-    # At most one BYE for the final unpaired single
-    bye_pair: list[list] = []
-    if len(singles) % 2 == 1:
-        bye_pair.append([singles[-1], None])
-
-    all_pairs = same_author_pairs + cross_pairs + bye_pair
-    random.shuffle(all_pairs)
-    return all_pairs
+    pairs = [[slots[i], slots[i + 1]] for i in range(0, size, 2)]
+    return pairs
 
 
 def create_game(quotes: list[dict], host_name: str) -> str:
@@ -178,7 +117,7 @@ def create_game(quotes: list[dict], host_name: str) -> str:
         "host": host_name,
         "status": "lobby",      # lobby | voting | results | done
         "round": 1,
-        "total_rounds": math.ceil(math.log2(len(quotes))) if len(quotes) > 1 else 1,
+        "total_rounds": int(math.log2(len(pairs) * 2)),
         "matchups": matchups,   # current round matchups
         "bracket_history": [],  # list of past round matchup lists
         "participants": {},     # name -> last_seen timestamp
@@ -193,13 +132,60 @@ def load_state(room_code: str) -> dict | None:
     p = state_path(room_code)
     if not p.exists():
         return None
-    with open(p) as f:
-        return json.load(f)
+    
+    lock_file = FileLock(str(lock_path(room_code)), timeout=10)
+    try:
+        with lock_file:
+            try:
+                with open(p) as f:
+                    return json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Corrupted JSON in {room_code}: {e}")
+                # Try to load from backup if available
+                backup_p = Path(str(p) + ".backup")
+                if backup_p.exists():
+                    try:
+                        with open(backup_p) as f:
+                            state = json.load(f)
+                        print(f"Recovered from backup for {room_code}")
+                        return state
+                    except json.JSONDecodeError:
+                        print(f"ERROR: Backup also corrupted for {room_code}")
+                        return None
+                return None
+            except Exception as e:
+                print(f"ERROR: Failed to load state for {room_code}: {e}")
+                return None
+    except Exception as e:
+        print(f"ERROR: Failed to acquire lock for {room_code}: {e}")
+        return None
 
 
 def save_state(room_code: str, state: dict):
-    with open(state_path(room_code), "w") as f:
-        json.dump(state, f, indent=2)
+    p = state_path(room_code)
+    lock_file = FileLock(str(lock_path(room_code)), timeout=10)
+    
+    try:
+        with lock_file:
+            # Atomic write: write to temp file first, then rename
+            # This prevents corruption if write is interrupted
+            temp_p = Path(str(p) + ".tmp")
+            try:
+                with open(temp_p, "w") as f:
+                    json.dump(state, f, indent=2)
+                # Create backup before replacing main file
+                if p.exists():
+                    backup_p = Path(str(p) + ".backup")
+                    p.rename(backup_p)
+                # Move temp file to main location
+                temp_p.rename(p)
+            except Exception as e:
+                print(f"ERROR: Failed to save state for {room_code}: {e}")
+                # Clean up temp file if something went wrong
+                if temp_p.exists():
+                    temp_p.unlink()
+    except Exception as e:
+        print(f"ERROR: Failed to acquire lock for {room_code}: {e}")
 
 
 def join_game(room_code: str, player_name: str) -> bool:
@@ -244,6 +230,9 @@ def all_voted(state: dict) -> bool:
 def advance_round(room_code: str):
     """Resolve current round and build next round matchups."""
     state = load_state(room_code)
+    if state is None:
+        print(f"ERROR: Cannot advance round - state corrupted for {room_code}")
+        return
     winners = []
     for m in state["matchups"]:
         if m["a"] is None:
@@ -266,9 +255,6 @@ def advance_round(room_code: str):
         state["champion"] = winners[0]
         state["matchups"] = []
     else:
-        # If an odd number of winners, the top seed gets a BYE this round
-        if len(winners) % 2 == 1:
-            winners.append(None)
         state["round"] += 1
         state["matchups"] = [
             {"a": winners[i], "b": winners[i + 1], "votes": {"a": [], "b": []}, "winner": None}
@@ -281,6 +267,9 @@ def advance_round(room_code: str):
 
 def start_voting(room_code: str):
     state = load_state(room_code)
+    if state is None:
+        print(f"ERROR: Cannot start voting - state corrupted for {room_code}")
+        return
     state["status"] = "voting"
     save_state(room_code, state)
 

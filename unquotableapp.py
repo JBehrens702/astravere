@@ -309,7 +309,7 @@ def render_bracket_visualization(state: dict, total_participants: int):
             
             node_text.append(f"{status_indicator}")
             hover_text = (
-                f"<b>{winner_quote.get('author') or ''}</b><br>"
+                f"<b>{winner_quote.get('author') or 'Unknown'}</b><br>"
                 f"<i>\"{winner_quote['text'][:80]}{'…' if len(winner_quote['text']) > 80 else ''}<i><br>"
                 f"Votes: <b>{winner_votes}</b> vs {loser_votes}"
             )
@@ -432,7 +432,7 @@ def page_host_setup():
     st.markdown("## Host Setup")
     st.markdown("---")
     host_name = st.text_input("Your name", placeholder="Host")
-    uploaded = st.file_uploader("Upload quotebook (.txt) - Ensure one quote per line.", type=["txt"])
+    uploaded = st.file_uploader("Upload quotebook (.txt)", type=["txt"])
 
     if uploaded and host_name:
         text = uploaded.read().decode("utf-8", errors="replace")
@@ -524,6 +524,9 @@ def page_host():
     elif status == "voting":
         st.markdown("### Voting in progress")
         state = load_state(code)
+        if not state:
+            st.error("Game state corrupted. Please refresh the page.")
+            return
         total_p = len(state["participants"])
         voted_all = all_voted(state)
 

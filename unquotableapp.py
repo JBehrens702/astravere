@@ -418,9 +418,9 @@ def render_bracket_visualization(state: dict, total_participants: int):
 # ── Landing ───────────────────────────────────────────────────────────────────
 def page_landing():
     st.markdown(f'<div style="display:flex;"><img src="{GITHUB_LOGO_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>Join the ultimate quotebook showdown game!</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>Host with any quotebook saved to a .txt file.</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>Ensure each quote falls on a separate line.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:1rem;'>Join the ultimate quotebook showdown game!</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:1rem;'>Host with any quotebook saved to a .txt file.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:1rem;'>Ensure each quote falls on a separate line.</p>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>Play with as many friends and quotes as you want!</p>", unsafe_allow_html=True)
     col1, _, col2 = st.columns([1, 0.15, 1])
     with col1:

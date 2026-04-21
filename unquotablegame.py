@@ -2,6 +2,7 @@ import json
 import os
 import random
 import math
+import re
 import string
 import time
 from pathlib import Path
@@ -24,21 +25,102 @@ def generate_room_code() -> str:
     return "".join(random.choices(string.ascii_uppercase, k=5))
 
 
+# ── Quote parsing helpers ─────────────────────────────────────────────────────
+
+# Detects one Name: "Quote" segment within a line.
+# Name must start with a letter; must not contain : or " (prevents false matches
+# on context strings like "(After checking the code)").
+_SPEAKER_SEG_RE = re.compile(r'([A-Za-z][^:"]*?):\s*"([^"]*)"')
+
+# Matches a full single-speaker line, quoted OR unquoted text.
+# Requires name to start with a letter so context lines starting with ( are skipped.
+_COLON_RE = re.compile(r'^([A-Za-z][^:"\n]*):\s*(.+)$')
+
+
+def _strip_outer_quotes(s: str) -> str:
+    """Strip surrounding quotes only when the string is fully wrapped in them."""
+    if len(s) >= 2 and (
+        (s[0] == '"'      and s[-1] == '"') or
+        (s[0] == '\u201c' and s[-1] == '\u201d')
+    ):
+        return s[1:-1]
+    return s
+
+
+def _clean_text(s: str) -> str:
+    """Remove a lone leading quote left after partial stripping."""
+    if s and s[0] in '"\u201c':
+        s = s[1:]
+        if s and s[-1] in '"\u201d':
+            s = s[:-1]
+    return s
+
+
+def _parse_line(line: str) -> dict | None:
+    """Parse one logical line into {text, author}. Returns None if empty."""
+
+    # ── (Context) "Quote" - Author  OR  "Quote" - Author ──────────────────
+    if " - " in line:
+        parts = line.rsplit(" - ", 1)
+        quote_text = _clean_text(_strip_outer_quotes(parts[0].strip()))
+        author = parts[1].strip() or None
+        if quote_text:
+            return {"text": quote_text, "author": author}
+
+    # ── Name: "Quote"  OR  Name: Quote (without quotes) ───────────────────
+    m = _COLON_RE.match(line)
+    if m:
+        author = m.group(1).strip() or None
+        quote_text = _clean_text(_strip_outer_quotes(m.group(2).strip()))
+        if quote_text:
+            return {"text": quote_text, "author": author}
+
+    # ── Plain text, no author ──────────────────────────────────────────────
+    quote_text = _clean_text(_strip_outer_quotes(line))
+    if quote_text:
+        return {"text": quote_text, "author": None}
+
+    return None
+
+
 def parse_quotebook(text: str) -> list[dict]:
+    """
+    Supported formats (one per line, blank lines ignored):
+
+      "Quote" - Author
+      (Context) "Quote" - Author     context kept in text, author extracted
+      Author: "Quote"                colon-author with quoted text
+      Author: Quote                  colon-author without quotes
+      A: "X"  B: "Y"  C: "Z"        multi-speaker on one line (tab- or
+                                     space-separated); full line kept as text,
+                                     authors joined as "A, B, C"
+      plain text                     displayed as-is, no author
+
+    Tabs between entries on one line are treated as multi-speaker separators
+    only when each segment matches Name: "Quote". Otherwise tabs separate
+    independent individual entries.
+    """
     quotes = []
-    for line in text.strip().splitlines():
-        line = line.strip()
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
         if not line:
             continue
-        if " - " in line:
-            parts = line.rsplit(" - ", 1)
-            quote_text = parts[0].strip().strip('"').strip("\u201c\u201d")
-            author = parts[1].strip()
-        else:
-            quote_text = line.strip('"').strip("\u201c\u201d")
-            author = "Unknown"
-        if quote_text:
-            quotes.append({"text": quote_text, "author": author})
+
+        # ── Multi-speaker on one line: 2+ Name: "Quote" segments ──────────
+        segs = _SPEAKER_SEG_RE.findall(line)
+        if len(segs) >= 2:
+            authors = ", ".join(name.strip() for name, _ in segs)
+            quotes.append({"text": line, "author": authors})
+            continue
+
+        # ── Tabs separate independent entries (non-multi-speaker) ──────────
+        parts = [p.strip() for p in line.split("\t") if p.strip()]
+        for part in parts:
+            q = _parse_line(part)
+            if q:
+                quotes.append(q)
+
     return quotes
 
 
@@ -48,54 +130,44 @@ def next_power_of_two(n: int) -> int:
 
 def build_bracket(quotes: list[dict]) -> list[list[dict | None]]:
     """
-    Build first-round matchups. Try to keep same-author quotes in the same
-    half of the bracket so they can only meet in later rounds.
-    Returns list of pairs: [[q1, q2], [q3, q4], ...]
-    At most one BYE is added if there's an odd number of quotes.
+    Build first-round matchups.
+    Strategy:
+      1. Group quotes by author and shuffle within each group.
+      2. Pair same-author quotes together (so they can only meet in later rounds).
+      3. Collect the leftover single per author that has an odd count.
+      4. Shuffle those singles and pair them cross-author.
+      5. If one single remains unpaired, it gets the sole BYE.
+    Result: at most ONE BYE; same-author quotes never face each other in round 1.
     """
-    # Only add one BYE if odd number of quotes
-    num_quotes = len(quotes)
-    padded = quotes[:]
-    random.shuffle(padded)
-    if num_quotes % 2 == 1:
-        padded.append(None)  # Only one BYE
-    
-    size = len(padded)
-
-    # Group by author, spread authors across bracket halves
     by_author: dict[str, list] = {}
-    for q in padded:
-        if q is None:
-            continue
-        by_author.setdefault(q["author"], []).append(q)
+    for i, q in enumerate(quotes):
+        # Authorless quotes each get a unique key so they're never grouped together
+        key = q["author"] if q.get("author") else f"__anon_{i}__"
+        by_author.setdefault(key, []).append(q)
+    for lst in by_author.values():
+        random.shuffle(lst)
 
-    # Sort authors by count descending so big authors get spread first
-    ordered = []
-    authors_sorted = sorted(by_author.keys(), key=lambda a: -len(by_author[a]))
-    for author in authors_sorted:
-        ordered.extend(by_author[author])
+    same_author_pairs: list[list] = []
+    singles: list[dict] = []
 
-    # Fill slots using a "snake" pattern to spread same-author quotes
-    slots = [None] * size
-    indices = list(range(size))
-    # Interleave: 0, size-1, size//2, size//2-1, ...
-    spread = []
-    lo, hi = 0, size - 1
-    toggle = True
-    while lo <= hi:
-        if toggle:
-            spread.append(lo)
-            lo += 1
-        else:
-            spread.append(hi)
-            hi -= 1
-        toggle = not toggle
+    for author_qs in by_author.values():
+        for i in range(0, len(author_qs) - 1, 2):
+            same_author_pairs.append([author_qs[i], author_qs[i + 1]])
+        if len(author_qs) % 2 == 1:
+            singles.append(author_qs[-1])
 
-    for i, q in enumerate(ordered):
-        slots[spread[i]] = q
+    random.shuffle(singles)
+    cross_pairs: list[list] = []
+    for i in range(0, len(singles) - 1, 2):
+        cross_pairs.append([singles[i], singles[i + 1]])
 
-    pairs = [[slots[i], slots[i + 1]] for i in range(0, size, 2)]
-    return pairs
+    bye_pair: list[list] = []
+    if len(singles) % 2 == 1:
+        bye_pair.append([singles[-1], None])
+
+    all_pairs = same_author_pairs + cross_pairs + bye_pair
+    random.shuffle(all_pairs)
+    return all_pairs
 
 
 def create_game(quotes: list[dict]) -> str:
@@ -116,7 +188,7 @@ def create_game(quotes: list[dict]) -> str:
         "room_code": room_code,
         "status": "lobby",      # lobby | voting | results | done
         "round": 1,
-        "total_rounds": int(math.log2(len(pairs) * 2)),
+        "total_rounds": math.ceil(math.log2(len(quotes))) if len(quotes) > 1 else 1,
         "matchups": matchups,   # current round matchups
         "bracket_history": [],  # list of past round matchup lists
         "participants": {},     # name -> last_seen timestamp

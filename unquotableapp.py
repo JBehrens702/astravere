@@ -435,10 +435,9 @@ def page_landing():
 def page_host_setup():
     st.markdown("## Host Setup")
     st.markdown("---")
-    host_name = st.text_input("Your name", placeholder="Host")
     uploaded = st.file_uploader("Upload quotebook (.txt)", type=["txt"])
 
-    if uploaded and host_name:
+    if uploaded:
         text = uploaded.read().decode("utf-8", errors="replace")
         quotes = parse_quotebook(text)
         st.markdown(f"**{len(quotes)} quotes** parsed.")
@@ -455,9 +454,8 @@ def page_host_setup():
                 st.markdown(f"*…and {len(quotes)-10} more*")
 
         if st.button("🚀  Create Game", use_container_width=True):
-            room_code = create_game(quotes, host_name)
+            room_code = create_game(quotes)
             st.session_state.room_code = room_code
-            st.session_state.player_name = host_name
             st.session_state.mode = "host"
             st.rerun()
 

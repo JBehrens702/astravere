@@ -614,38 +614,33 @@ def page_host():
         champ_text = champ.get('text', '')
         champ_text_html = champ_text if (champ_text and champ_text[0] in '"\u201c(') else f'&#x201C;{champ_text}&#x201D;'
 
-        col_chart, col_info = st.columns([3, 2])
+        st.markdown(f"""
+        <div class="champion-card">
+            <div class="champion-label">🏆 Champion</div>
+            <div class="champion-quote">{champ_text_html}</div>
+            {champ_author_html}
+        </div>
+        """, unsafe_allow_html=True)
+        render_bracket_visualization(state, len(state["participants"]))
+        
+        with st.expander("Full bracket history"):
+            for r, rnd in enumerate(state["bracket_history"], 1):
+                st.markdown(f"**Round {r}**")
+                for m in rnd:
+                    if not m["a"] or not m["b"]:
+                        continue
+                    ws = m.get("winner", "a")
+                    w = m[ws]
+                    va, vb = get_vote_counts(m)
+                    wv = max(va, vb)
+                    lv = min(va, vb)
+                    author_str = f" — {w['author']}" if w.get('author') else ""
+                    st.markdown(f'- ✓ *"{display_text(w["text"])}"*{author_str} ({wv}-{lv})')
 
-        with col_chart:
-            render_bracket_visualization(state, len(state["participants"]))
-
-        with col_info:
-            st.markdown(f"""
-            <div class="champion-card">
-                <div class="champion-label">🏆 Champion</div>
-                <div class="champion-quote">{champ_text_html}</div>
-                {champ_author_html}
-            </div>
-            """, unsafe_allow_html=True)
-
-            with st.expander("Full bracket history"):
-                for r, rnd in enumerate(state["bracket_history"], 1):
-                    st.markdown(f"**Round {r}**")
-                    for m in rnd:
-                        if not m["a"] or not m["b"]:
-                            continue
-                        ws = m.get("winner", "a")
-                        w = m[ws]
-                        va, vb = get_vote_counts(m)
-                        wv = max(va, vb)
-                        lv = min(va, vb)
-                        author_str = f" — {w['author']}" if w.get('author') else ""
-                        st.markdown(f'- ✓ *"{display_text(w["text"])}"*{author_str} ({wv}-{lv})')
-
-            if st.button("🔄  New Game", use_container_width=True):
-                st.session_state.mode = None
-                st.session_state.room_code = None
-                st.rerun()
+        if st.button("🔄  New Game", use_container_width=True):
+            st.session_state.mode = None
+            st.session_state.room_code = None
+            st.rerun()
 
 
 # ── PARTICIPANT VIEW ──────────────────────────────────────────────────────────

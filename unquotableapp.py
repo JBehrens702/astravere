@@ -193,6 +193,9 @@ def render_quote_card(quote, selected=False, show_author=False):
         # Multi-line dialogue: preserve line breaks, no outer curly quotes
         inner = raw_text.replace("\n", "<br>")
         quote_html = f'<div class="quote-text">{inner}</div>'
+    elif raw_text and raw_text[0] in '"\u201c(':
+        # Text already carries its own quotes or a context prefix — don't double-wrap
+        quote_html = f'<div class="quote-text">{raw_text}</div>'
     else:
         quote_html = f'<div class="quote-text">&#x201C;{raw_text}&#x201D;</div>'
     st.markdown(f"""
@@ -609,15 +612,15 @@ def page_host():
     elif status == "done":
         champ = state.get("champion", {})
         champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
+        champ_text = champ.get('text', '')
+        champ_text_html = champ_text if (champ_text and champ_text[0] in '"\u201c(') else f'&#x201C;{champ_text}&#x201D;'
         st.markdown(f"""
         <div class="champion-card">
             <div class="champion-label">🏆 Champion</div>
-            <div class="champion-quote">&#x201C;{champ.get('text','')}&#x201D;</div>
+            <div class="champion-quote">{champ_text_html}</div>
             {champ_author_html}
         </div>
         """, unsafe_allow_html=True)
-
-        with st.expander("Full bracket history"):
             for r, rnd in enumerate(state["bracket_history"], 1):
                 st.markdown(f"**Round {r}**")
                 for m in rnd:
@@ -713,10 +716,12 @@ def page_participant():
     elif status == "done":
         champ = state.get("champion", {})
         champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
+        champ_text = champ.get('text', '')
+        champ_text_html = champ_text if (champ_text and champ_text[0] in '"\u201c(') else f'&#x201C;{champ_text}&#x201D;'
         st.markdown(f"""
         <div class="champion-card">
             <div class="champion-label">🏆 Champion</div>
-            <div class="champion-quote">&#x201C;{champ.get('text','')}&#x201D;</div>
+            <div class="champion-quote">{champ_text_html}</div>
             {champ_author_html}
         </div>
         """, unsafe_allow_html=True)

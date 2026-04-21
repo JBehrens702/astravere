@@ -621,6 +621,8 @@ def page_host():
             {champ_author_html}
         </div>
         """, unsafe_allow_html=True)
+
+        with st.expander("Full bracket history"):
             for r, rnd in enumerate(state["bracket_history"], 1):
                 st.markdown(f"**Round {r}**")
                 for m in rnd:

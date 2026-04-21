@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import os
 from unquotablegame import (
     parse_quotebook,
     create_game,
@@ -19,6 +20,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+GITHUB_QR_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/qrcode.png"
 
 # ── Styling ───────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -500,7 +504,7 @@ def page_host():
         st.markdown(f"## Round {state['round']} of {state['total_rounds']}")
         st.markdown(f'<div class="room-code">{code}</div>', unsafe_allow_html=True)
     with col_center:
-        st.image("qrcode.png", use_column_width=True)
+        st.image(GITHUB_QR_URL, use_column_width=True)
     with col_right:
         participants = list(state["participants"].keys())
         st.markdown(f"<br><br>**{len(participants)} player(s)**", unsafe_allow_html=True)

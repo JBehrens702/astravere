@@ -505,7 +505,7 @@ def page_host():
     with col_left:
         st.markdown(f'<div class="room-code">{code}</div>', unsafe_allow_html=True)
     with col_center:
-        st.markdown(f'<div style="display:flex;align-items:center;justify-content:center;height:100%;"><img src="{GITHUB_QR_URL}" style="width:100%;"></div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="display:flex;align-items:center;justify-content:center;background:#18181f;border:1px solid #2a2a35;border-radius:12px;padding:1.5rem;margin:1rem 0;min-height:110px;"><img src="{GITHUB_QR_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
     with col_right:
         participants = list(state["participants"].keys())
         st.markdown(f"<br><br>**{len(participants)} player(s)**", unsafe_allow_html=True)

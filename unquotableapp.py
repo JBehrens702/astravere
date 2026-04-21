@@ -495,7 +495,7 @@ def page_host():
         st.error("Game state not found.")
         return
 
-    col_left, col_center, col_right = st.columns([3, 1])
+    col_left, col_center, col_right = st.columns([3, 1, 1])
     with col_left:
         st.markdown(f"## Round {state['round']} of {state['total_rounds']}")
         st.markdown(f'<div class="room-code">{code}</div>', unsafe_allow_html=True)

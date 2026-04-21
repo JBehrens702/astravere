@@ -498,10 +498,11 @@ def page_host():
     if not state:
         st.error("Game state not found.")
         return
+    
+    st.markdown(f"## Round {state['round']} of {state['total_rounds']}")
 
     col_left, col_center, col_right = st.columns([3, 1, 1])
     with col_left:
-        st.markdown(f"## Round {state['round']} of {state['total_rounds']}")
         st.markdown(f'<div class="room-code">{code}</div>', unsafe_allow_html=True)
     with col_center:
         st.image(GITHUB_QR_URL, use_column_width=True)

@@ -1,6 +1,6 @@
 # Welcome to Astravere Online!
 
-This is where I host projects I made for Dungeons and Dragons, specifically including content for my "Astravere" campaign setting. Check out some of the apps I have included:
+This is where I host projects I made for Dungeons and Dragons (and some other projects), specifically including content for my "Astravere" campaign setting. Check out some of the apps I have included:
 
 ## CELESTEV2
 #### Astravere: Mechanics

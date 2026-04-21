@@ -505,7 +505,7 @@ def page_host():
     with col_left:
         st.markdown(f'<div class="room-code">{code}</div>', unsafe_allow_html=True)
     with col_center:
-        st.image(GITHUB_QR_URL, use_column_width=True)
+        st.markdown(f'<div style="display:flex;align-items:center;justify-content:center;height:100%;"><img src="{GITHUB_QR_URL}" style="width:100%;"></div>', unsafe_allow_html=True)
     with col_right:
         participants = list(state["participants"].keys())
         st.markdown(f"<br><br>**{len(participants)} player(s)**", unsafe_allow_html=True)

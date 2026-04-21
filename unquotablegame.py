@@ -98,7 +98,7 @@ def build_bracket(quotes: list[dict]) -> list[list[dict | None]]:
     return pairs
 
 
-def create_game(quotes: list[dict], host_name: str) -> str:
+def create_game(quotes: list[dict]) -> str:
     room_code = generate_room_code()
     pairs = build_bracket(quotes)
 
@@ -114,7 +114,6 @@ def create_game(quotes: list[dict], host_name: str) -> str:
 
     state = {
         "room_code": room_code,
-        "host": host_name,
         "status": "lobby",      # lobby | voting | results | done
         "round": 1,
         "total_rounds": int(math.log2(len(pairs) * 2)),

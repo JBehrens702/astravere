@@ -22,7 +22,8 @@ st.set_page_config(
 )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-GITHUB_QR_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/qrcode.png"
+GITHUB_LOGO_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqlogo.png"
+GITHUB_QR_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqqrcode.png"
 
 # ── Styling ───────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -416,7 +417,7 @@ def render_bracket_visualization(state: dict, total_participants: int):
 
 # ── Landing ───────────────────────────────────────────────────────────────────
 def page_landing():
-    st.markdown("<h1 style='text-align:center;font-size:2.8rem;margin-bottom:0.25rem;'>[UN]Quotable - The Game</h1>", unsafe_allow_html=True)
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_LOGO_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>The ultimate quotebook showdown</p>", unsafe_allow_html=True)
     col1, _, col2 = st.columns([1, 0.15, 1])
     with col1:

@@ -193,9 +193,6 @@ def render_quote_card(quote, selected=False, show_author=False):
         # Multi-line dialogue: preserve line breaks, no outer curly quotes
         inner = raw_text.replace("\n", "<br>")
         quote_html = f'<div class="quote-text">{inner}</div>'
-    elif raw_text and raw_text[0] in '"\u201c(':
-        # Text already carries its own quotes or a context prefix — don't double-wrap
-        quote_html = f'<div class="quote-text">{raw_text}</div>'
     else:
         quote_html = f'<div class="quote-text">&#x201C;{raw_text}&#x201D;</div>'
     st.markdown(f"""
@@ -224,11 +221,13 @@ def build_bracket_layers(state: dict) -> list[list]:
     """
     Organize bracket into layers: past rounds (from history) + current round.
     Returns: [round1_matchups, round2_matchups, ..., current_round_matchups]
+    When the game is done, matchups is empty so we only return history.
     """
     layers = []
     for past_round in state["bracket_history"]:
         layers.append(past_round)
-    layers.append(state["matchups"])
+    if state["matchups"]:  # don't append the empty list when done
+        layers.append(state["matchups"])
     return layers
 
 
@@ -614,32 +613,39 @@ def page_host():
         champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
         champ_text = champ.get('text', '')
         champ_text_html = champ_text if (champ_text and champ_text[0] in '"\u201c(') else f'&#x201C;{champ_text}&#x201D;'
-        st.markdown(f"""
-        <div class="champion-card">
-            <div class="champion-label">🏆 Champion</div>
-            <div class="champion-quote">{champ_text_html}</div>
-            {champ_author_html}
-        </div>
-        """, unsafe_allow_html=True)
 
-        with st.expander("Full bracket history"):
-            for r, rnd in enumerate(state["bracket_history"], 1):
-                st.markdown(f"**Round {r}**")
-                for m in rnd:
-                    if not m["a"] or not m["b"]:
-                        continue
-                    ws = m.get("winner", "a")
-                    w = m[ws]
-                    va, vb = get_vote_counts(m)
-                    wv = max(va, vb)
-                    lv = min(va, vb)
-                    author_str = f" — {w['author']}" if w.get('author') else ""
-                    st.markdown(f'- ✓ *"{display_text(w["text"])}"*{author_str} ({wv}-{lv})')
+        col_chart, col_info = st.columns([3, 2])
 
-        if st.button("🔄  New Game"):
-            st.session_state.mode = None
-            st.session_state.room_code = None
-            st.rerun()
+        with col_chart:
+            render_bracket_visualization(state, len(state["participants"]))
+
+        with col_info:
+            st.markdown(f"""
+            <div class="champion-card">
+                <div class="champion-label">🏆 Champion</div>
+                <div class="champion-quote">{champ_text_html}</div>
+                {champ_author_html}
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander("Full bracket history"):
+                for r, rnd in enumerate(state["bracket_history"], 1):
+                    st.markdown(f"**Round {r}**")
+                    for m in rnd:
+                        if not m["a"] or not m["b"]:
+                            continue
+                        ws = m.get("winner", "a")
+                        w = m[ws]
+                        va, vb = get_vote_counts(m)
+                        wv = max(va, vb)
+                        lv = min(va, vb)
+                        author_str = f" — {w['author']}" if w.get('author') else ""
+                        st.markdown(f'- ✓ *"{display_text(w["text"])}"*{author_str} ({wv}-{lv})')
+
+            if st.button("🔄  New Game", use_container_width=True):
+                st.session_state.mode = None
+                st.session_state.room_code = None
+                st.rerun()
 
 
 # ── PARTICIPANT VIEW ──────────────────────────────────────────────────────────
@@ -718,12 +724,10 @@ def page_participant():
     elif status == "done":
         champ = state.get("champion", {})
         champ_author_html = f'<div class="champion-author">— {champ["author"]}</div>' if champ.get("author") else ""
-        champ_text = champ.get('text', '')
-        champ_text_html = champ_text if (champ_text and champ_text[0] in '"\u201c(') else f'&#x201C;{champ_text}&#x201D;'
         st.markdown(f"""
         <div class="champion-card">
             <div class="champion-label">🏆 Champion</div>
-            <div class="champion-quote">{champ_text_html}</div>
+            <div class="champion-quote">&#x201C;{champ.get('text','')}&#x201D;</div>
             {champ_author_html}
         </div>
         """, unsafe_allow_html=True)

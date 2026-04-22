@@ -418,10 +418,6 @@ def render_bracket_visualization(state: dict, total_participants: int):
 # ── Landing ───────────────────────────────────────────────────────────────────
 def page_landing():
     st.markdown(f'<div style="display:flex;"><img src="{GITHUB_LOGO_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;'>Join the ultimate quotebook showdown game!</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;'>Host with any quotebook saved to a .txt file.</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;'>Ensure each quote falls on a separate line.</p>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;margin-bottom:3rem;'>Play with as many friends and quotes as you want!</p>", unsafe_allow_html=True)
     col1, _, col2 = st.columns([1, 0.15, 1])
     with col1:
         st.markdown("#### Host a Game")
@@ -441,6 +437,9 @@ def page_landing():
 def page_host_setup():
     st.markdown("## Host Setup")
     st.markdown("---")
+
+    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;'>Host with any quotebook saved to a .txt file.</br>Ensure each quote falls on a separate line.</br>Play with as many friends and quotes as you want!</p>", unsafe_allow_html=True)
+    
     uploaded = st.file_uploader("Upload quotebook (.txt)", type=["txt"])
 
     if uploaded:
@@ -474,6 +473,9 @@ def page_host_setup():
 def page_join_setup():
     st.markdown("## Join a Game")
     st.markdown("---")
+
+    st.markdown("<p style='text-align:center;color:#555;font-size:1rem;'>Join the ultimate quotebook showdown game!</p>", unsafe_allow_html=True)
+    
     code = st.text_input("Room code", max_chars=5, placeholder="ABCDE").strip().upper()
     name = st.text_input("Your name", placeholder="Player")
 

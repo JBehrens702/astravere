@@ -24,6 +24,8 @@ st.set_page_config(
 # ── Constants ─────────────────────────────────────────────────────────────────
 GITHUB_LOGO_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqlogo.png"
 GITHUB_QR_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqqrcode.png"
+GITHUB_TOP_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqpaget.png"
+GITHUB_BOT_URL = "https://raw.githubusercontent.com/JBehrens702/astravere/main/uqpageb.png"
 
 # ── Styling ───────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -432,9 +434,13 @@ def page_landing():
             st.session_state.mode = "join_setup"
             st.rerun()
 
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_BOT_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
+
 
 # ── Host Setup ────────────────────────────────────────────────────────────────
 def page_host_setup():
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_TOP_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
+    
     st.markdown("## Host Setup")
     st.markdown("---")
 
@@ -468,9 +474,12 @@ def page_host_setup():
         st.session_state.mode = None
         st.rerun()
 
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_BOT_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
 
 # ── Join Setup ────────────────────────────────────────────────────────────────
 def page_join_setup():
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_TOP_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
+    
     st.markdown("## Join a Game")
     st.markdown("---")
 
@@ -495,10 +504,13 @@ def page_join_setup():
     if st.button("← Back"):
         st.session_state.mode = None
         st.rerun()
-
+        
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_BOT_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
 
 # ── HOST VIEW ─────────────────────────────────────────────────────────────────
 def page_host():
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_TOP_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
+    
     code = st.session_state.room_code
     state = load_state(code)
     if not state:
@@ -648,9 +660,12 @@ def page_host():
             st.session_state.room_code = None
             st.rerun()
 
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_BOT_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
 
 # ── PARTICIPANT VIEW ──────────────────────────────────────────────────────────
 def page_participant():
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_TOP_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
+
     code = st.session_state.room_code
     name = st.session_state.player_name
     state = load_state(code)
@@ -734,6 +749,7 @@ def page_participant():
         """, unsafe_allow_html=True)
         st.balloons()
 
+    st.markdown(f'<div style="display:flex;"><img src="{GITHUB_BOT_URL}" style="width:100%;border-radius:8px;"></div>', unsafe_allow_html=True)
 
 # ── Router ────────────────────────────────────────────────────────────────────
 mode = st.session_state.mode
